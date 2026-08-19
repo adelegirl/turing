@@ -40,3 +40,8 @@
    - 保存后会得到访问地址：`https://YOUR_USERNAME.github.io/turing/`
 
 > 访问根地址时会自动加载 `index.html`，即 `途灵Pro.html` 的内容。
+
+## 线上地址
+
+- 网站首页：<https://adelegirl.github.io/turing/>
+- 仓库地址：<https://github.com/adelegirl/turing>
