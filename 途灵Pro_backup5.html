@@ -1,0 +1,613 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>途灵Pro · AI智能旅行路线规划助手</title>
+<style>
+  /* ============ 全局变量 ============ */
+  :root{
+    --c-blue:#0ea5e9;
+    --c-teal:#14b8a6;
+    --grad:linear-gradient(135deg,#0ea5e9 0%,#14b8a6 100%);
+    --grad-soft:linear-gradient(135deg,#0ea5e9 0%,#14b8a6 100%);
+    --ink:#0f172a;
+    --ink-2:#334155;
+    --ink-3:#64748b;
+    --line:#e2e8f0;
+    --bg:#f7fafc;
+    --card:#ffffff;
+    --shadow:0 10px 30px -12px rgba(15,23,42,.18);
+    --shadow-lg:0 24px 60px -20px rgba(14,165,233,.45);
+    --radius:20px;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+
+  .wrap{max-width:1140px;margin:0 auto;padding:0 22px;}
+  section{padding:90px 0;}
+  .section-title{
+    font-size:clamp(26px,4vw,38px);
+    font-weight:800;
+    letter-spacing:-.5px;
+    text-align:center;
+    margin-bottom:12px;
+  }
+  .section-sub{
+    text-align:center;
+    color:var(--ink-3);
+    max-width:640px;
+    margin:0 auto 48px;
+    font-size:16px;
+  }
+  .grad-text{
+    background:var(--grad);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  /* ============ 顶部导航 ============ */
+  header.nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    backdrop-filter:saturate(160%) blur(12px);
+    background:rgba(255,255,255,.72);
+    border-bottom:1px solid rgba(226,232,240,.7);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:62px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;}
+  .brand .logo{
+    width:30px;height:30px;border-radius:9px;background:var(--grad);
+    display:grid;place-items:center;color:#fff;font-size:16px;
+    box-shadow:0 6px 16px -6px rgba(20,184,166,.6);
+  }
+  .nav-links{display:flex;gap:26px;font-size:14.5px;color:var(--ink-2);}
+  .nav-links a{position:relative;transition:color .2s;}
+  .nav-links a:hover{color:var(--c-teal);}
+  .nav-cta{
+    background:var(--grad);color:#fff;padding:9px 18px;border-radius:999px;
+    font-size:14px;font-weight:600;box-shadow:0 8px 20px -8px rgba(14,165,233,.7);
+    transition:transform .2s, box-shadow .2s;
+  }
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 14px 26px -8px rgba(14,165,233,.8);}
+  @media(max-width:760px){.nav-links{display:none;}}
+
+  /* ============ HERO ============ */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;align-items:center;
+    background:radial-gradient(1200px 600px at 75% -10%,rgba(20,184,166,.35),transparent 60%),
+               radial-gradient(900px 500px at 10% 110%,rgba(14,165,233,.30),transparent 55%),
+               #0b1220;
+    color:#e8f4f8;
+    overflow:hidden;
+    padding-top:62px;
+  }
+  .hero-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+  .hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(148,232,255,.35);
+    padding:7px 14px;border-radius:999px;font-size:13px;color:#bdf0ff;margin-bottom:22px;
+    backdrop-filter:blur(6px);
+  }
+  .hero h1{font-size:clamp(40px,7vw,72px);line-height:1.05;font-weight:900;letter-spacing:-1px;margin-bottom:18px;}
+  .hero h1 .grad-text{background:linear-gradient(135deg,#7dd3fc,#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .hero .slogan{font-size:clamp(17px,2.4vw,22px);color:#cbe8f3;max-width:480px;margin-bottom:30px;}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{
+    padding:13px 26px;border-radius:999px;font-weight:700;font-size:15px;cursor:pointer;border:none;
+    transition:transform .2s, box-shadow .2s, background .2s;
+  }
+  .btn-primary{background:var(--grad);color:#fff;box-shadow:0 12px 28px -10px rgba(20,184,166,.8);}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 18px 36px -10px rgba(20,184,166,.9);}
+  .btn-ghost{background:rgba(255,255,255,.08);color:#e8f4f8;border:1px solid rgba(148,232,255,.4);}
+  .btn-ghost:hover{background:rgba(255,255,255,.16);transform:translateY(-3px);}
+
+  .hero-ip{
+    position:relative;
+    display:flex;justify-content:center;align-items:center;
+  }
+  /* IP 形象占位符 */
+  .ip-placeholder{
+    width:min(340px,80vw);aspect-ratio:1/1;border-radius:28px;
+    background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+    border:1.5px dashed rgba(148,232,255,.5);
+    display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;
+    color:#bfe9f7;text-align:center;padding:20px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.6);
+    backdrop-filter:blur(4px);
+  }
+  .ip-placeholder .ph-icon{font-size:54px;filter:grayscale(.2);}
+  .ip-placeholder .ph-text{font-size:13px;line-height:1.5;opacity:.9;}
+  .ip-placeholder .ph-hint{font-size:11.5px;opacity:.7;border:1px solid rgba(148,232,255,.4);border-radius:8px;padding:3px 8px;}
+
+  .scroll-cue{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:3;
+    color:#9fd9e8;font-size:12px;text-align:center;animation:bob 2s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,8px);}}
+
+  @media(max-width:880px){
+    .hero .wrap{grid-template-columns:1fr;text-align:center;padding-top:30px;}
+    .hero .slogan{margin-left:auto;margin-right:auto;}
+    .hero-actions{justify-content:center;}
+    .hero-ip{order:-1;margin-bottom:10px;}
+  }
+
+  /* ============ 通用卡片 ============ */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px;box-shadow:var(--shadow);
+    transition:transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .3s, border-color .3s;
+    position:relative;overflow:hidden;
+  }
+  .card:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg);border-color:rgba(20,184,166,.4);}
+
+  /* ============ 痛点区 ============ */
+  .pain{background:linear-gradient(180deg,#0b1220 0%,var(--bg) 40%);}
+  .pain .section-title,.pain .section-sub{color:#e8f4f8;}
+  .pain .section-sub{color:#b9d6e2;}
+  .pain-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center;margin-top:10px;}
+  .pain-card{padding:30px;}
+  .pain-card.old{border-color:rgba(239,68,68,.25);}
+  .pain-card.new{border-color:rgba(20,184,166,.3);}
+  .pain-tag{display:inline-block;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:14px;}
+  .pain-card.old .pain-tag{background:#fee2e2;color:#dc2626;}
+  .pain-card.new .pain-tag{background:#ccfbf1;color:#0f766e;}
+  .pain-list{list-style:none;display:flex;flex-direction:column;gap:12px;}
+  .pain-list li{display:flex;gap:10px;font-size:15px;color:var(--ink-2);}
+  .pain-list .mk{flex:0 0 auto;font-weight:800;}
+  .old .mk{color:#dc2626;}
+  .new .mk{color:var(--c-teal);}
+  .pain-arrow{font-size:34px;color:var(--c-teal);text-align:center;}
+  @media(max-width:780px){.pain-grid{grid-template-columns:1fr;}.pain-arrow{transform:rotate(90deg);}}
+
+  /* ============ 功能演示 ============ */
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .feat-card .feat-icon{
+    width:56px;height:56px;border-radius:16px;background:var(--grad);
+    display:grid;place-items:center;font-size:28px;margin-bottom:18px;
+    box-shadow:0 12px 24px -10px rgba(20,184,166,.7);
+  }
+  .feat-card h3{font-size:19px;margin-bottom:10px;}
+  .feat-card p{color:var(--ink-3);font-size:14.5px;}
+  .feat-card .demo{
+    margin-top:18px;padding:14px;border-radius:12px;background:#f1f5f9;font-size:13px;color:var(--ink-2);
+    border-left:3px solid var(--c-teal);
+  }
+  .feat-card .demo b{color:var(--c-blue);}
+  @media(max-width:820px){.feat-grid{grid-template-columns:1fr;}}
+
+  /* ============ 技术原理 ============ */
+  .flow{background:linear-gradient(180deg,var(--bg) 0%,#eef6f8 100%);}
+  .flow .wrap{max-width:100%;padding-left:20px;padding-right:20px;}
+  .flow-chart{
+    width:100%;max-width:100%;padding:0 20px;box-sizing:border-box;
+    display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:0;margin:10px 0 34px;
+  }
+  .flow-node{
+    flex:1 1 0;min-width:0;max-width:200px;padding:20px 12px;
+    background:#fff;border:1px solid var(--line);border-radius:16px;
+    text-align:center;box-shadow:var(--shadow);
+    opacity:.45;transform:translateY(14px) scale(.97);
+    transition:opacity .5s, transform .5s, box-shadow .5s, border-color .5s;
+    display:flex;flex-direction:column;justify-content:center;gap:6px;
+  }
+  .flow-node .n-icon{font-size:24px;}
+  .flow-node .n-title{font-weight:700;font-size:clamp(12px,1.2vw,18px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .flow-node .n-desc{font-size:clamp(12px,1.2vw,18px);color:var(--ink-3);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .flow-node.active{opacity:1;transform:translateY(0) scale(1);border-color:transparent;
+    background:linear-gradient(180deg,#fff,#f0fdfa);box-shadow:0 18px 40px -16px rgba(14,165,233,.55);}
+  .flow-node.active .n-title{color:var(--c-teal);}
+  .flow-arrow{
+    flex-shrink:0;margin:0 4px;align-self:center;width:42px;display:flex;justify-content:center;color:#cbd5e1;
+    font-size:22px;opacity:.4;transition:opacity .4s,color .4s,transform .4s;
+  }
+  .flow-arrow.lit{opacity:1;color:var(--c-teal);transform:translateX(3px);}
+  section{max-width:100% !important;}
+
+  .iframe-box{
+    margin-top:8px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:var(--shadow);background:#fff;
+  }
+  .iframe-box .iframe-head{
+    display:flex;align-items:center;gap:10px;padding:12px 18px;background:#0b1220;color:#cbe8f3;font-size:14px;
+  }
+  .iframe-box .dot{width:10px;height:10px;border-radius:50%;background:var(--c-teal);box-shadow:0 0 0 4px rgba(20,184,166,.25);}
+  .iframe-box iframe{width:100%;height:420px;border:0;display:block;background:#f8fafc;}
+  .iframe-placeholder{
+    height:420px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;
+    color:var(--ink-3);text-align:center;padding:20px;background:
+      repeating-linear-gradient(45deg,#f8fafc,#f8fafc 16px,#f1f5f9 16px,#f1f5f9 32px);
+  }
+  .iframe-placeholder .ph-icon{font-size:46px;}
+  .iframe-placeholder code{background:#0b1220;color:#7dd3fc;padding:4px 10px;border-radius:8px;font-size:12.5px;}
+
+  /* ============ 技术亮点 ============ */
+  .hl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .hl-card{padding:26px;text-align:center;}
+  .hl-card .hl-icon{
+    width:60px;height:60px;margin:0 auto 16px;border-radius:18px;
+    background:linear-gradient(160deg,#e0f2fe,#ccfbf1);
+    display:grid;place-items:center;font-size:30px;
+    transition:transform .3s;
+  }
+  .hl-card:hover .hl-icon{transform:scale(1.1) rotate(-4deg);}
+  .hl-card h3{font-size:17px;margin-bottom:8px;}
+  .hl-card p{color:var(--ink-3);font-size:14px;}
+  @media(max-width:820px){.hl-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:480px){.hl-grid{grid-template-columns:1fr;}}
+
+  /* ============ 开发者 ============ */
+  .dev{background:#0b1220;color:#e8f4f8;}
+  .dev .section-title{color:#fff;}
+  .dev .section-sub{color:#b9d6e2;}
+  .dev-card{
+    background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+    border:1px solid rgba(148,232,255,.22);border-radius:24px;padding:40px;text-align:center;
+    max-width:760px;margin:0 auto;
+  }
+  .dev-avatars{display:flex;justify-content:center;gap:30px;margin-bottom:26px;flex-wrap:wrap;}
+  .dev-avatar{
+    width:120px;height:120px;border-radius:50%;
+    background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+    border:1.5px dashed rgba(148,232,255,.5);
+    display:grid;place-items:center;color:#bfe9f7;font-size:13px;text-align:center;
+  }
+  .dev-avatar .ph-icon{font-size:38px;display:block;margin-bottom:4px;}
+  .dev-quote{font-size:clamp(18px,2.6vw,23px);font-weight:700;line-height:1.6;}
+  .dev-quote .grad-text{background:linear-gradient(135deg,#7dd3fc,#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .dev-names{margin-top:14px;color:#9fd9e8;font-size:14px;}
+
+  /* ============ 底部 ============ */
+  footer{background:#070d18;color:#9fb6c4;padding:60px 0 34px;}
+  .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:34px;margin-bottom:36px;}
+  footer h4{color:#e8f4f8;font-size:15px;margin-bottom:16px;}
+  .foot-brand{font-size:22px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .foot-brand .logo{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center;color:#fff;}
+  .foot-brand-sub{font-size:13.5px;line-height:1.7;}
+  .foot-list{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px;}
+  .foot-list a:hover{color:#7dd3fc;}
+  .contact-line{display:flex;align-items:center;gap:9px;font-size:14px;}
+  .foot-bottom{border-top:1px solid rgba(148,232,255,.12);padding-top:22px;text-align:center;font-size:13px;color:#6b8494;}
+  @media(max-width:760px){.foot-grid{grid-template-columns:1fr;gap:26px;}}
+
+  /* ============ 滚动渐入 ============ */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1);}
+  .reveal.in{opacity:1;transform:none;}
+  .reveal.d1{transition-delay:.08s;}
+  .reveal.d2{transition-delay:.16s;}
+  .reveal.d3{transition-delay:.24s;}
+  .reveal.d4{transition-delay:.32s;}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+</style>
+</head>
+<body>
+
+<!-- ============ 导航 ============ -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="logo">🧭</span>途灵Pro</div>
+    <nav class="nav-links">
+      <a href="#pain">痛点</a>
+      <a href="#feat">功能</a>
+      <a href="#flow">原理</a>
+      <a href="#hl">亮点</a>
+      <a href="#dev">开发者</a>
+    </nav>
+    <a class="nav-cta" href="#dev">了解更多</a>
+
+</header>
+
+<!-- ============ HERO ============ -->
+  </div>
+<section class="hero">
+  <!-- 动态路线连线背景（内联 SVG + SMIL 动画） -->
+  <svg class="hero-bg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="lineG" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#14b8a6"/>
+      </linearGradient>
+      <radialGradient id="pinG"><stop offset="0%" stop-color="#5eead4"/><stop offset="100%" stop-color="#0ea5e9"/></radialGradient>
+    </defs>
+
+    <!-- 路线 1 -->
+    <path id="p1" d="M120,520 C320,360 480,560 640,420 C820,260 980,440 1120,300" fill="none" stroke="url(#lineG)" stroke-width="2.5" stroke-dasharray="8 10" opacity=".55">
+      <animate attributeName="stroke-dashoffset" from="0" to="-180" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <!-- 路线 2 -->
+    <path id="p2" d="M80,160 C260,240 420,120 600,260 C780,400 940,200 1140,360" fill="none" stroke="url(#lineG)" stroke-width="2.5" stroke-dasharray="8 10" opacity=".45">
+      <animate attributeName="stroke-dashoffset" from="0" to="180" dur="4.2s" repeatCount="indefinite"/>
+    </path>
+    <!-- 路线 3 -->
+    <path id="p3" d="M200,640 C360,500 520,640 700,500 C900,360 1000,520 1160,420" fill="none" stroke="url(#lineG)" stroke-width="2" stroke-dasharray="6 12" opacity=".35">
+      <animate attributeName="stroke-dashoffset" from="0" to="-160" dur="5s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- 城市节点 -->
+    <g fill="url(#pinG)">
+      <circle cx="120" cy="520" r="6"><animate attributeName="r" values="6;9;6" dur="2.4s" repeatCount="indefinite"/></circle>
+      <circle cx="640" cy="420" r="6"><animate attributeName="r" values="6;9;6" dur="2.8s" repeatCount="indefinite"/></circle>
+      <circle cx="1120" cy="300" r="6"><animate attributeName="r" values="6;9;6" dur="2.2s" repeatCount="indefinite"/></circle>
+      <circle cx="80" cy="160" r="6"><animate attributeName="r" values="6;9;6" dur="3s" repeatCount="indefinite"/></circle>
+      <circle cx="600" cy="260" r="6"><animate attributeName="r" values="6;9;6" dur="2.6s" repeatCount="indefinite"/></circle>
+      <circle cx="1140" cy="360" r="6"><animate attributeName="r" values="6;9;6" dur="2.5s" repeatCount="indefinite"/></circle>
+      <circle cx="700" cy="500" r="6"><animate attributeName="r" values="6;9;6" dur="3.1s" repeatCount="indefinite"/></circle>
+    </g>
+
+    <!-- 沿路线移动的光点 -->
+    <circle r="4.5" fill="#fff"><animateMotion dur="4s" repeatCount="indefinite"><mpath href="#p1"/></animateMotion></circle>
+    <circle r="4.5" fill="#fff"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></circle>
+    <circle r="4" fill="#a5f3fc"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#p3"/></animateMotion></circle>
+  </svg>
+
+  <div class="wrap">
+    <div class="hero-text">
+      <span class="hero-badge">🚀 AI 智能体 · 旅行规划</span>
+      <h1>途灵<span class="grad-text">Pro</span></h1>
+      <p class="slogan">AI智能旅行路线规划助手 —— 一句话，规划好你的整段旅程。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#feat">看它怎么用</a>
+        <a class="btn btn-ghost" href="#flow">技术原理</a>
+      </div>
+    </div>
+
+    <div class="hero-ip">
+      <!-- ===== IP 形象图占位符：请将下方 div 替换为 <img src="你的IP图.png" alt="途灵Pro IP"> ===== -->
+        <img src="途灵IP_立牌.jpg" alt="途灵Pro IP" style="width:min(340px,80vw); aspect-ratio:1/1; object-fit:contain; border-radius:28px; box-shadow:0 30px 70px -30px rgba(0,0,0,.6); opacity:.75;">
+    </div>
+
+
+
+  </div>
+  <div class="scroll-cue">向下滚动 ↓</div>
+</section>
+
+<!-- ============ 痛点引入 ============ -->
+<section class="pain" id="pain">
+  <div class="wrap">
+    <h2 class="section-title reveal">做攻略，真的这么累吗？</h2>
+    <p class="section-sub reveal">传统旅行规划，把大量时间花在了「查」和「算」上，而不是「玩」上。</p>
+
+    <div class="pain-grid">
+      <div class="card pain-card old reveal">
+        <span class="pain-tag">😩 传统方式</span>
+        <ul class="pain-list">
+          <li><span class="mk">✕</span><span>反复切换地图，挨个城市查位置</span></li>
+          <li><span class="mk">✕</span><span>手算城市间距，担心排错顺序</span></li>
+          <li><span class="mk">✕</span><span>跨境 / 港澳台还要另查一套</span></li>
+          <li><span class="mk">✕</span><span>改一个城市，整张路线重排</span></li>
+        </ul>
+
+      </div>
+      <div class="pain-arrow reveal">➜</div>
+
+      <div class="card pain-card new reveal d1">
+        <span class="pain-tag">✨ 途灵Pro</span>
+        <ul class="pain-list">
+          <li><span class="mk">✓</span><span>只说一句话，AI 自动提取城市</span></li>
+          <li><span class="mk">✓</span><span>精确求解最优环游顺序</span></li>
+          <li><span class="mk">✓</span><span>全国 + 港澳台一站式规划</span></li>
+          <li><span class="mk">✓</span><span>秒级重算，随时改随时出</span></li>
+        </ul>
+
+
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 功能演示 ============ -->
+<section id="feat">
+  <div class="wrap">
+    <h2 class="section-title reveal">三个场景，一句话搞定</h2>
+    <p class="section-sub reveal">无论你是多城环游、跨境出行，还是预算有限，途灵Pro 都能听懂你的需求。</p>
+
+    <div class="feat-grid">
+      <div class="card feat-card reveal">
+        <div class="feat-icon">🗺️</div>
+        <h3>多城环游路线优化</h3>
+        <p>丢一串城市名，自动算出最优环游顺序，少走冤枉路、省下往返时间。</p>
+        <div class="demo">示例：<b>"北京 西安 成都 重庆 上海 玩一圈"</b> → 最优回路一键生成</div>
+
+      </div>
+      <div class="card feat-card reveal d1">
+        <div class="feat-icon">🌏</div>
+        <h3>跨境路线规划</h3>
+        <p>支持港澳台及跨境行程，统一坐标系规划，不用来回切换工具绕弯子。</p>
+        <div class="demo">示例：<b>"香港 澳门 广州 深圳 台北"</b> → 跨境顺序智能排布</div>
+
+      </div>
+      <div class="card feat-card reveal d2">
+        <div class="feat-icon">💰</div>
+        <h3>预算主题推荐</h3>
+        <p>说出预算或主题（穷游 / 美食 / 亲子），匹配合适的城市与路线组合。</p>
+        <div class="demo">示例：<b>"上海出发玩遍五岳和黄山"</b> → 主题化路线推荐</div>
+
+
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 技术原理 ============ -->
+<section class="flow" id="flow">
+  <div class="wrap">
+    <h2 class="section-title reveal">它是怎么算出来的？</h2>
+    <p class="section-sub reveal">从一句自然语言，到一张可执行的行程卡，背后是一条完整的处理流水线。</p>
+
+    <!-- 流程图：节点依次高亮由 JS 控制 -->
+    <div class="flow-chart reveal" id="flowChart">
+      <div class="flow-node"><span class="n-icon">💬</span><span class="n-title">自然语言输入</span><span class="n-desc">用户一句话描述需求</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><span class="n-icon">🤖</span><span class="n-title">城市提取 LLM</span><span class="n-desc">大模型抽取城市列表</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><span class="n-icon">📍</span><span class="n-title">高德 geocode</span><span class="n-desc">城市名转经纬度</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><span class="n-icon">📐</span><span class="n-title">Haversine 距离矩阵</span><span class="n-desc">两两真实球面距离</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><span class="n-icon">⚙️</span><span class="n-title">Held-Karp DP</span><span class="n-desc">动态规划求最短回路</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node"><span class="n-icon">🎫</span><span class="n-title">行程卡输出</span><span class="n-desc">可执行的旅行方案</span></div>
+
+    </div>
+    <div class="iframe-box reveal">
+      <div class="iframe-head"><span class="dot"></span>技术原理动画演示</div>
+      <!-- ===== 预留 iframe 位置：把下面这个占位 div 替换为 <iframe src="你的动画地址.html"></iframe> 即可 ===== -->
+      <iframe src="技术原理动画.html" style="width:100%; height:700px; border:none;"></iframe>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 技术亮点 ============ -->
+<section id="hl">
+  <div class="wrap">
+    <h2 class="section-title reveal">六大技术亮点</h2>
+    <p class="section-sub reveal">把复杂的求解过程藏起来，把简单的体验留给你。</p>
+
+    <div class="hl-grid">
+      <div class="card hl-card reveal"><div class="hl-icon">🧩</div><h3>零代码</h3><p>不懂技术也能用，会说话就会规划。</p></div>
+      <div class="card hl-card reveal d1"><div class="hl-icon">🎯</div><h3>精确求解</h3><p>Held-Karp 动态规划求全局最优回路。</p></div>
+      <div class="card hl-card reveal d2"><div class="hl-icon">🗺️</div><h3>全国覆盖</h3><p>覆盖全国地级市，想去哪都行。</p></div>
+      <div class="card hl-card reveal"><div class="hl-icon">🏝️</div><h3>港澳台</h3><p>支持港澳台地区，跨境一体规划。</p></div>
+      <div class="card hl-card reveal d1"><div class="hl-icon">💬</div><h3>自然语言交互</h3><p>像聊天一样说需求，无需表单。</p></div>
+      <div class="card hl-card reveal d2"><div class="hl-icon">⚡</div><h3>批量地理编码</h3><p>一次解析上百城市坐标，秒级响应。</p></div>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 开发者介绍 ============ -->
+<section class="dev" id="dev">
+  <div class="wrap">
+    <h2 class="section-title reveal">开发者介绍</h2>
+    <p class="section-sub reveal">一位小开发者，一个agent，一个想法，一段代码。</p>
+
+    <div class="dev-card reveal">
+      <div class="dev-avatars">
+        <!-- ===== 开发者卡通形象 1 占位符：替换为 <img src="开发者A.png"> ===== --> 
+        <img src="豆豆.png" alt="开发者A" style="width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 12px 30px -10px rgba(0,0,0,.5);">
+      </div>
+      <p class="dev-quote">「我们用代码，把旅行的麻烦<br>变成<span class="grad-text">一句话</span>的事。」</p>
+      <p class="dev-names">途灵Pro 由一位小开发者和扣子agent共同打造 · 青少年 AI 创客作品</p>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 底部 ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand"><span class="logo">🧭</span>途灵Pro</div>
+        <p class="foot-brand-sub">AI智能旅行路线规划助手。让每一次出发，都从一句简单的话开始。</p>
+        <p class="foot-brand-sub">途灵直达：🌐 <span><a href="https://www.coze.cn/store/agent/7661838732705742888?bot_id=true&bid=6l0vmape03g13" target="_blank" rel="noopener">https://www.coze.cn/store/agent/7661838732705742888?bot_id=true&bid=6l0vmape03g13</a></p>
+      </div>
+      <div>
+        <h4>参赛信息</h4>
+        <ul class="foot-list">
+          <li>2026 青少年 AI 创客大赛</li>
+          <li>作品类别：智能体应用</li>
+          <li>赛道：AI + 生活服务</li>
+        </ul>
+
+      </div>
+      <div>
+        <h4>联系方式</h4>
+        <ul class="foot-list">
+          <li class="contact-line">✉️ <span>邮箱：<a href="mailto:shiwne@coze.email">shiwne@coze.email</a></span></li>
+          <li class="contact-line">💬 <span>微信：wxid_yqnw9nl8m3h922</span></li>
+          <li class="contact-line">🌐 <span>项目主页： <a href="https://adelegirl.github.io/turing/" target="_blank" rel="noopener">https://adelegirl.github.io/turing/</a></span></li>
+        </ul>
+
+
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 途灵Pro · AI智能旅行路线规划助手 · 保留所有权利</div>
+
+  </div>
+</footer>
+
+<script>
+  /* ============ 滚动渐入 ============ */
+  (function(){
+    var items = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){
+      items.forEach(function(el){el.classList.add('in');});
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    },{threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+    items.forEach(function(el){io.observe(el);});
+  })();
+
+  /* ============ 技术原理流程图：进入视口后节点依次高亮 ============ */
+  (function(){
+    var chart = document.getElementById('flowChart');
+    if(!chart) return;
+    var nodes = chart.querySelectorAll('.flow-node');
+    var arrows = chart.querySelectorAll('.flow-arrow');
+    var done = false;
+
+    function lightUp(){
+      if(done) return; done = true;
+      nodes.forEach(function(n,i){
+        setTimeout(function(){ n.classList.add('active'); if(arrows[i]) arrows[i].classList.add('lit'); }, i*420);
+      });
+    }
+
+    if(!('IntersectionObserver' in window)){ lightUp(); return; }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting) lightUp(); });
+    },{threshold:0.35});
+    io.observe(chart);
+
+    /* 再次滚动到该区时，把高亮重置以便重复观看 */
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(!e.isIntersecting){
+          done = false;
+          nodes.forEach(function(n){n.classList.remove('active');});
+          arrows.forEach(function(a){a.classList.remove('lit');});
+        }
+      });
+    },{threshold:0});
+    io2.observe(chart);
+  })();
+
+  /* ============ 平滑锚点（兼容旧浏览器） ============ */
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(ev){
+      var id = a.getAttribute('href');
+      if(id.length>1){
+        var t = document.querySelector(id);
+        if(t){ ev.preventDefault(); t.scrollIntoView({behavior:'smooth', block:'start'}); }
+      }
+    });
+  });
+</script>
+</body>
+</html>
